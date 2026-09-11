@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ThermoShelter - Thermal Modeling & Passive Shelter Optimization</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- Chart.js -->
+  <script src="{{ url_for('static', filename='js/chart.min.js') }}"></script>
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="top-header">
+    <div class="brand-section">
+      <div class="brand-logo">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+      </div>
+      <div class="brand-title">
+        ThermoShelter <span style="color:#f97316;">Pro</span>
+        <span class="brand-badge">v3.2.1-Beta</span>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs-container">
+      <button class="nav-tab-btn active" data-tab="dashboard">Dashboard</button>
+      <button class="nav-tab-btn" data-tab="studio">Simulation Studio</button>
+      <button class="nav-tab-btn" data-tab="materials">Materials Database</button>
+      <button class="nav-tab-btn" data-tab="reports">Reports &amp; Logs</button>
+    </nav>
+
+    <!-- Top Right Status & Profile -->
+    <div class="user-status-section">
+      <div class="solver-status-pill">
+        <span class="solver-dot"></span>
+        SOLVER ACTIVE
+      </div>
+      <button class="header-icon-btn" id="openSettingsBtn" title="Simulation Configuration">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </button>
+      <div class="user-profile" title="Signed in as Chief Thermal Engineer">
+        <div class="user-avatar">DP</div>
+        <span class="user-name"><Dr panda></Dr></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <div class="app-container">
+
+    <!-- Left Sidebar: Simulation Settings -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2>Simulation Settings</h2>
+        <p>Configure environmental &amp; design parameters</p>
+      </div>
+
+      <!-- SHELTER PARAMETERS (Terrain / Environment Option replacing fixed location) -->
+      <div class="param-group">
+        <div class="param-group-title">SHELTER PARAMETERS</div>
+        
+        <div class="form-field">
+          <label for="terrainSelect">Terrain / Environment</label>
+          <select id="terrainSelect" class="custom-select">
+            {% for key, t in terrains.items() %}
+              <option value="{{ key }}" {% if loop.first %}selected{% endif %}>{{ key }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-field">
+            <label for="latitudeInput">Latitude</label>
+            <input type="number" id="latitudeInput" class="custom-input" step="0.0001" value="-1.2921">
+          </div>
+          <div class="form-field">
+            <label for="longitudeInput">Longitude</label>
+            <input type="number" id="longitudeInput" class="custom-input" step="0.0001" value="36.8219">
+          </div>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-field">
+            <label for="altitudeInput">Altitude</label>
+            <div class="input-with-unit">
+              <input type="number" id="altitudeInput" class="custom-input" value="1795">
+              <span class="unit-badge">m</span>
+            </div>
+          </div>
+          <div class="form-field">
+            <label for="climateZoneSelect">Climate Zone</label>
+            <select id="climateZoneSelect" class="custom-select">
+              <option value="Composite" selected>Composite</option>
+              <option value="Hot-Arid">Hot-Arid (BWh)</option>
+              <option value="Alpine">Alpine Tundra (ET)</option>
+              <option value="Tropical">Tropical Rainforest (Af)</option>
+              <option value="Temperate">Temperate (Cfb)</option>
+              <option value="Polar">Polar Ice (EF)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- MATERIAL PROPERTIES -->
+      <div class="param-group">
+        <div class="param-group-title">MATERIAL PROPERTIES</div>
+
+        <div class="form-field">
+          <label for="wallMaterialSelect">Wall Material</label>
+          <select id="wallMaterialSelect" class="custom-select">
+            {% for mat_name in materials.keys() %}
+              <option value="{{ mat_name }}" {% if 'Brick' in mat_name %}selected{% endif %}>{{ mat_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label for="roofMaterialSelect">Roof Material</label>
+          <select id="roofMaterialSelect" class="custom-select">
+            {% for mat_name in materials.keys() %}
+              <option value="{{ mat_name }}" {% if 'Wood Shingles' in mat_name %}selected{% endif %}>{{ mat_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-field">
+            <label for="conductivityInput">Conductivity (k)</label>
+            <div class="input-with-unit">
+              <input type="number" id="conductivityInput" class="custom-input" step="0.01" value="0.84">
+              <span class="unit-badge">W/mK</span>
+            </div>
+          </div>
+          <div class="form-field">
+            <label for="thicknessInput">Thickness</label>
+            <div class="input-with-unit">
+              <input type="number" id="thicknessInput" class="custom-input" step="1" value="220">
+              <span class="unit-badge">mm</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label for="reflectivityInput">Outer Reflectivity</label>
+          <div class="input-with-unit">
+            <input type="number" id="reflectivityInput" class="custom-input" step="0.5" value="72.5">
+            <span class="unit-badge">%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- SHELTER GEOMETRY -->
+      <div class="param-group">
+        <div class="param-group-title">SHELTER GEOMETRY</div>
+
+        <div class="form-field">
+          <label for="shapeModelSelect">Shape Model</label>
+          <select id="shapeModelSelect" class="custom-select">
+            {% for shape_key, shape_val in shapes.items() %}
+              <option value="{{ shape_key }}" {% if shape_key == 'Rectangular Gable' %}selected{% endif %}>{{ shape_key }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-row-3">
+          <div class="form-field">
+            <label for="lengthInput">Length</label>
+            <div class="input-with-unit">
+              <input type="number" id="lengthInput" class="custom-input" step="0.1" value="6.0">
+              <span class="unit-badge">m</span>
+            </div>
+          </div>
+          <div class="form-field">
+            <label for="widthInput">Width</label>
+            <div class="input-with-unit">
+              <input type="number" id="widthInput" class="custom-input" step="0.1" value="4.5">
+              <span class="unit-badge">m</span>
+            </div>
+          </div>
+          <div class="form-field">
+            <label for="heightInput">Height</label>
+            <div class="input-with-unit">
+              <input type="number" id="heightInput" class="custom-input" step="0.1" value="3.2">
+              <span class="unit-badge">m</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label for="pitchInput">Roof Pitch</label>
+          <div class="input-with-unit">
+            <input type="number" id="pitchInput" class="custom-input" step="1" value="25.0">
+            <span class="unit-badge">deg</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ENVIRONMENTAL CONDITIONS -->
+      <div class="param-group">
+        <div class="param-group-title">ENVIRONMENTAL CONDITIONS</div>
+
+        <div class="form-row-2">
+          <div class="form-field">
+            <label for="ambientTempInput">Ambient Temp</label>
+            <div class="input-with-unit">
+              <input type="number" id="ambientTempInput" class="custom-input" step="0.1" value="34.2">
+              <span class="unit-badge">°C</span>
+            </div>
+          </div>
+          <div class="form-field">
+            <label for="humidityInput">Rel. Humidity</label>
+            <div class="input-with-unit">
+              <input type="number" id="humidityInput" class="custom-input" step="1" value="62">
+              <span class="unit-badge">%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-field">
+            <label for="windSpeedInput">Wind Speed</label>
+            <div class="input-with-unit">
+              <input type="number" id="windSpeedInput" class="custom-input" step="0.1" value="3.2">
+              <span class="unit-badge">m/s</span>
+            </div>
+          </div>
+          <div class="form-field">
+            <label for="solarIrradianceInput">Solar Irradiance</label>
+            <div class="input-with-unit">
+              <input type="number" id="solarIrradianceInput" class="custom-input" step="10" value="850">
+              <span class="unit-badge">W/m²</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar Action Buttons -->
+      <div class="sidebar-actions">
+        <button id="runSimBtn" class="btn-primary">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          Run Simulation
+        </button>
+        <button id="optimizeBtn" class="btn-secondary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+          </svg>
+          Auto-Optimize Design
+        </button>
+        <button id="resetDefaultsBtn" class="btn-ghost">Reset Defaults</button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+
+      <!-- ================= TAB 1: DASHBOARD ================= -->
+      <div id="tab-dashboard" class="tab-view active">
+        
+        <!-- Top 4 KPI Cards -->
+        <div class="kpi-grid">
+          <!-- Card 1: Inside Temperature -->
+          <div class="kpi-card">
+            <div class="kpi-icon-wrapper icon-temp">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/>
+              </svg>
+            </div>
+            <div class="kpi-details">
+              <span class="kpi-label">INSIDE TEMPERATURE</span>
+              <span class="kpi-value" id="kpiInsideTemp">28.4°C</span>
+              <span class="kpi-subtext" id="kpiInsideSubtext">Dampened (Peak ambient 34.2°C)</span>
+            </div>
+          </div>
+
+          <!-- Card 2: Solar Energy Yield -->
+          <div class="kpi-card">
+            <div class="kpi-icon-wrapper icon-solar">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="4"/>
+                <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+              </svg>
+            </div>
+            <div class="kpi-details">
+              <span class="kpi-label">SOLAR ENERGY YIELD</span>
+              <span class="kpi-value" id="kpiSolarYield">487 W/m²</span>
+              <span class="kpi-subtext">Captured roof photovoltaic array</span>
+            </div>
+          </div>
+
+          <!-- Card 3: Heat Flow Rate -->
+          <div class="kpi-card">
+            <div class="kpi-icon-wrapper icon-heat">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m16 3 4 4-4 4"/>
+                <path d="M20 7H4"/>
+                <path d="m8 21-4-4 4-4"/>
+                <path d="M4 17h16"/>
+              </svg>
+            </div>
+            <div class="kpi-details">
+              <span class="kpi-label">HEAT FLOW RATE</span>
+              <span class="kpi-value" id="kpiHeatFlow">12.6 W</span>
+              <span class="kpi-subtext">Net out-flow dynamic exchange</span>
+            </div>
+          </div>
+
+          <!-- Card 4: Thermal Comfort Index -->
+          <div class="kpi-card">
+            <div class="kpi-icon-wrapper icon-comfort">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                <path d="m9 12 2 2 4-4"/>
+              </svg>
+            </div>
+            <div class="kpi-details">
+              <span class="kpi-label">THERMAL COMFORT INDEX</span>
+              <span class="kpi-value" id="kpiComfortIndex">0.72</span>
+              <span class="kpi-subtext" id="kpiComfortSubtext">Optimal occupant comfort margin</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Middle Charts Row -->
+        <div class="charts-grid">
+          
+          <!-- Chart 1: Temperature Profile (24h) -->
+          <div class="chart-card">
+            <div class="chart-header">
+              <div class="chart-title-area">
+                <h3>Temperature Profile (24h)</h3>
+                <p>Simulated inside air temperature vs external ambient</p>
+              </div>
+              <div class="chart-legend-custom">
+                <div class="legend-item">
+                  <span class="legend-dot-dash"></span>
+                  <span>Ambient</span>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-line-solid"></span>
+                  <span>Inside</span>
+                </div>
+              </div>
+            </div>
+            <div class="chart-container-box">
+              <canvas id="tempProfileChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Chart 2: Heat Flow Analysis -->
+          <div class="chart-card">
+            <div class="chart-header">
+              <div class="chart-title-area">
+                <h3>Heat Flow Analysis</h3>
+                <p>Continuous breakdown of passive thermal transfer vectors</p>
+              </div>
+              <div class="chart-legend-custom">
+                <div class="legend-item"><span class="legend-sq sq-cond"></span> Conduction</div>
+                <div class="legend-item"><span class="legend-sq sq-conv"></span> Convection</div>
+                <div class="legend-item"><span class="legend-sq sq-rad"></span> Radiation</div>
+              </div>
+            </div>
+            <div class="chart-container-box">
+              <canvas id="heatFlowChart"></canvas>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Bottom Cards Row -->
+        <div class="bottom-grid">
+          
+          <!-- Card 1: Recommended Thermal Design -->
+          <div class="card-panel">
+            <div class="card-panel-header">
+              <div class="panel-title-with-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+                  <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+                  <path d="M4 22h16"/>
+                  <path d="M10 14.66V17c0 .55-.45 1-1 1H7c-.55 0-1-.45-1-1v-2.34c0-.52.2-1.02.57-1.4L8 12"/>
+                  <path d="M14 14.66V17c0 .55.45 1 1 1h2c.55 0 1-.45 1-1v-2.34c0-.52-.2-1.02-.57-1.4L16 12"/>
+                  <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+                </svg>
+                <span>Recommended Thermal Design</span>
+              </div>
+              <span class="panel-badge-optimal" id="optimalBadge">OPTIMAL</span>
+            </div>
+
+            <div class="specs-list">
+              <div class="spec-item">
+                <span class="spec-name">Optimal Shape Model</span>
+                <span class="spec-value" id="recShapeModel">Rectangular Dome Hybrid</span>
+              </div>
+              <div class="spec-item">
+                <span class="spec-name">Recommended Wall Layer</span>
+                <span class="spec-value" id="recWallLayer">Clay Brick + Polyurethane Core</span>
+              </div>
+              <div class="spec-item">
+                <span class="spec-name">Recommended Roof Layer</span>
+                <span class="spec-value" id="recRoofLayer">Wood Shingle + Reflective Barrier</span>
+              </div>
+              <div class="spec-item">
+                <span class="spec-name">Insulation Thickness</span>
+                <span class="spec-value" id="recInsulation">120 mm (Min)</span>
+              </div>
+              <div class="spec-item">
+                <span class="spec-name">Optimal Orientation</span>
+                <span class="spec-value" id="recOrientation">15.0° North-East Offset</span>
+              </div>
+            </div>
+
+            <div class="efficiency-section">
+              <div class="eff-header">
+                <span class="eff-label">System Thermal Efficiency</span>
+                <span class="eff-score" id="recEfficiencyScore">94.5% (Class A)</span>
+              </div>
+              <div class="eff-bar-bg">
+                <div class="eff-bar-fill" id="recEfficiencyBar"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 2: Thermal Resistance (R-value) -->
+          <div class="card-panel">
+            <div class="card-panel-header">
+              <div class="panel-title-with-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="20" x2="18" y2="10"/>
+                  <line x1="12" y1="20" x2="12" y2="4"/>
+                  <line x1="6" y1="20" x2="6" y2="14"/>
+                </svg>
+                <span>Thermal Resistance (R-value)</span>
+              </div>
+              <span class="panel-subtext">m²K/W (Lower is conductive)</span>
+            </div>
+
+            <div class="r-values-list">
+              <div class="r-value-row">
+                <span class="r-mat-name">Brick</span>
+                <div class="r-bar-track"><div class="r-bar-fill fill-brick"></div></div>
+                <span class="r-num-val">0.85</span>
+              </div>
+              <div class="r-value-row">
+                <span class="r-mat-name">Concrete</span>
+                <div class="r-bar-track"><div class="r-bar-fill fill-concrete"></div></div>
+                <span class="r-num-val">0.40</span>
+              </div>
+              <div class="r-value-row">
+                <span class="r-mat-name">Wood</span>
+                <div class="r-bar-track"><div class="r-bar-fill fill-wood"></div></div>
+                <span class="r-num-val">1.65</span>
+              </div>
+              <div class="r-value-row">
+                <span class="r-mat-name">Mud</span>
+                <div class="r-bar-track"><div class="r-bar-fill fill-mud"></div></div>
+                <span class="r-num-val">0.95</span>
+              </div>
+              <div class="r-value-row">
+                <span class="r-mat-name">Bamboo</span>
+                <div class="r-bar-track"><div class="r-bar-fill fill-bamboo"></div></div>
+                <span class="r-num-val">1.10</span>
+              </div>
+              <div class="r-value-row">
+                <span class="r-mat-name">Steel</span>
+                <div class="r-bar-track"><div class="r-bar-fill fill-steel"></div></div>
+                <span class="r-num-val">0.05</span>
+              </div>
+            </div>
+
+            <p class="r-note">R-Value scale optimized for 220mm nominal construction depth.</p>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- ================= TAB 2: SIMULATION STUDIO ================= -->
+      <div id="tab-studio" class="tab-view">
+        <div class="studio-card">
+          <h3 class="studio-title">Multi-Terrain Performance Benchmark</h3>
+          <p style="font-size:0.8rem; color:var(--text-muted);">
+            Evaluates the current shelter construction against all atmospheric terrains simultaneously to test thermal adaptability and passive comfort resilience.
+          </p>
+          <div style="overflow-x:auto;">
+            <table class="table-modern" id="terrainBenchmarkTable">
+              <thead>
+                <tr>
+                  <th>Terrain / Environment</th>
+                  <th>Climate Zone</th>
+                  <th>Ext. Peak</th>
+                  <th>Simulated Inside</th>
+                  <th>Damping</th>
+                  <th>Solar Yield</th>
+                  <th>Comfort Score</th>
+                  <th>Optimal Shape</th>
+                </tr>
+              </thead>
+              <tbody id="terrainBenchmarkBody">
+                <!-- Dynamically populated by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="studio-grid">
+          <div class="studio-card">
+            <h3 class="studio-title">Envelope Dimension &amp; Thermal Specs</h3>
+            <div class="specs-list" id="envelopeSpecsList">
+              <div class="spec-item"><span class="spec-name">Floor Footprint Area</span><span class="spec-value" id="specFloorArea">27.0 m²</span></div>
+              <div class="spec-item"><span class="spec-name">Gross Wall Surface Area</span><span class="spec-value" id="specWallArea">67.2 m²</span></div>
+              <div class="spec-item"><span class="spec-name">Pitched Roof Surface Area</span><span class="spec-value" id="specRoofArea">35.1 m²</span></div>
+              <div class="spec-item"><span class="spec-name">Conditioned Interior Volume</span><span class="spec-value" id="specVolume">99.4 m³</span></div>
+              <div class="spec-item"><span class="spec-name">Wall U-Value (Conductance)</span><span class="spec-value" id="specUWall">2.31 W/m²K</span></div>
+              <div class="spec-item"><span class="spec-name">Roof U-Value (Conductance)</span><span class="spec-value" id="specURoof">0.40 W/m²K</span></div>
+              <div class="spec-item"><span class="spec-name">Total Effective Thermal Capacitance</span><span class="spec-value" id="specThermalCap">18.4 MJ/K</span></div>
+            </div>
+          </div>
+
+          <div class="studio-card">
+            <h3 class="studio-title">Solar Irradiance Diurnal Sweep (W/m²)</h3>
+            <div class="chart-container-box" style="height: 220px;">
+              <canvas id="studioSolarChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= TAB 3: MATERIALS DATABASE ================= -->
+      <div id="tab-materials" class="tab-view">
+        <div class="materials-top-actions">
+          <div class="search-input-wrapper">
+            <input type="text" id="materialSearchInput" class="custom-input" placeholder="Search materials (e.g. Brick, Wood, Foam, Bamboo)...">
+          </div>
+          <button class="btn-primary" id="openAddMaterialModalBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Add Custom Material
+          </button>
+        </div>
+
+        <div class="materials-grid" id="materialsGrid">
+          <!-- Dynamically populated by JS from backend materials database -->
+        </div>
+      </div>
+
+      <!-- ================= TAB 4: REPORTS & LOGS ================= -->
+      <div id="tab-reports" class="tab-view">
+        <div class="materials-top-actions">
+          <div>
+            <h3 style="color:#ffffff; font-size:1.1rem; margin-bottom:4px;">Engineering Physics &amp; Thermal Audit Trail</h3>
+            <p style="color:var(--text-muted); font-size:0.8rem;">Rigorous mathematical formulations and timestamped simulation execution logs.</p>
+          </div>
+          <button class="btn-primary" id="downloadCsvBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download CSV Report
+          </button>
+        </div>
+
+        <div class="reports-layout">
+          <!-- Solved Tasks Checklist -->
+          <div class="formula-card">
+            <h4 style="color:#ffffff; font-size:0.95rem;">Model Requirements &amp; Task Fulfillment</h4>
+            <div class="specs-list">
+              <div class="spec-item">
+                <span class="spec-name">Task 1: Inside Temperature Prediction</span>
+                <span class="spec-value" style="color:#10b981;">✓ Solved (Sol-air dynamic ODE with thermal mass damping &amp; phase lag)</span>
+              </div>
+              <div class="spec-item">
+                <span class="spec-name">Task 2: Solar Energy Yield Prediction</span>
+                <span class="spec-value" style="color:#10b981;">✓ Solved (Direct &amp; diffuse solar irradiance + roof albedo absorption flux)</span>
+              </div>
+              <div class="spec-item">
+                <span class="spec-name">Task 3: Heat Flow Details Across Time</span>
+                <span class="spec-value" style="color:#10b981;">✓ Solved (Multi-vector Conduction, Convection, Radiation at defined intervals)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mathematical Formulations -->
+          <div class="formula-card">
+            <h4 style="color:#ffffff; font-size:0.95rem;">Governing Thermodynamic Equations</h4>
+            
+            <div style="display:flex; flex-direction:column; gap:10px;">
+              <div>
+                <span style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">1. Dynamic Thermal Heat Balance (Lumped Parameter ODE):</span>
+                <div class="formula-box">
+                  C_thermal · (dT_in / dt) = Σ (A_i / R_i)·(T_amb(t) - T_in(t)) + Q_solar_in(t) - Q_ventilation(t)
+                </div>
+              </div>
+
+              <div>
+                <span style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">2. Solar Irradiance &amp; Energy Yield (W/m²):</span>
+                <div class="formula-box">
+                  I_sol(t) = I_peak · [sin(π·(t - 6)/12)]^1.2 · (1 + 0.04·(Alt/1000))
+                  Q_absorbed = I_sol(t) · (1 - ρ_reflectivity) · F_shape_exposure
+                </div>
+              </div>
+
+              <div>
+                <span style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">3. Conduction, Convection &amp; Sky Radiation Vectors:</span>
+                <div class="formula-box">
+                  Q_cond = UA · (T_amb - T_in) | Q_conv = h_c · A · (T_surf - T_amb) | Q_rad = ε·σ·A·(T_sky⁴ - T_surf⁴)
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Solver Execution Logs -->
+          <div class="formula-card">
+            <h4 style="color:#ffffff; font-size:0.95rem;">Live Simulation Logs</h4>
+            <div id="simulationAuditLogs" style="background:#090d16; border-radius:6px; padding:14px; font-family:var(--font-mono); font-size:0.78rem; color:#94a3b8; max-height:220px; overflow-y:auto; line-height:1.6;">
+              <div>[INFO] System initialized: ThermoShelter Pro v3.2.1-Beta solver ready.</div>
+              <div>[INFO] Terrains database loaded: 6 terrain environmental profiles indexed.</div>
+              <div>[INFO] Materials database initialized: 11 certified construction materials loaded.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- Add Custom Material Modal -->
+  <div class="modal-overlay" id="addMaterialModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Add Custom Material</h3>
+        <button class="modal-close-btn" id="closeAddMaterialModalBtn">&times;</button>
+      </div>
+
+      <div class="form-field">
+        <label for="newMatName">Material Name</label>
+        <input type="text" id="newMatName" class="custom-input" placeholder="e.g. Mycelium Bio-Insulation">
+      </div>
+
+      <div class="form-row-2">
+        <div class="form-field">
+          <label for="newMatCategory">Category</label>
+          <select id="newMatCategory" class="custom-select">
+            <option value="Insulation">Insulation</option>
+            <option value="Bio-Composite">Bio-Composite</option>
+            <option value="Masonry">Masonry</option>
+            <option value="Timber">Timber</option>
+            <option value="Metals">Metals</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label for="newMatConductivity">Conductivity (k)</label>
+          <div class="input-with-unit">
+            <input type="number" id="newMatConductivity" class="custom-input" step="0.001" value="0.04">
+            <span class="unit-badge">W/mK</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row-2">
+        <div class="form-field">
+          <label for="newMatThickness">Default Thickness</label>
+          <div class="input-with-unit">
+            <input type="number" id="newMatThickness" class="custom-input" step="5" value="100">
+            <span class="unit-badge">mm</span>
+          </div>
+        </div>
+        <div class="form-field">
+          <label for="newMatDensity">Density</label>
+          <div class="input-with-unit">
+            <input type="number" id="newMatDensity" class="custom-input" step="10" value="65">
+            <span class="unit-badge">kg/m³</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row-2">
+        <div class="form-field">
+          <label for="newMatReflectivity">Outer Reflectivity</label>
+          <div class="input-with-unit">
+            <input type="number" id="newMatReflectivity" class="custom-input" step="1" value="60">
+            <span class="unit-badge">%</span>
+          </div>
+        </div>
+        <div class="form-field">
+          <label for="newMatSpecificHeat">Specific Heat</label>
+          <div class="input-with-unit">
+            <input type="number" id="newMatSpecificHeat" class="custom-input" step="50" value="1400">
+            <span class="unit-badge">J/kgK</span>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-primary" id="saveCustomMaterialBtn" style="margin-top:8px;">Save Material to Database</button>
+    </div>
+  </div>
+
+  <!-- Settings Dialog Modal -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Solver &amp; Simulation Engine Settings</h3>
+        <button class="modal-close-btn" id="closeSettingsModalBtn">&times;</button>
+      </div>
+      <p style="font-size:0.8rem; color:var(--text-muted);">
+        Configure integration step size, ASHRAE thermal comfort standard benchmarks, and convergence tolerance.
+      </p>
+      <div class="form-field">
+        <label>Integration Step Size (dt)</label>
+        <select class="custom-select" id="settingDt">
+          <option value="60">60 seconds (Standard High Precision)</option>
+          <option value="30">30 seconds (Ultra Fine)</option>
+          <option value="300">300 seconds (Fast Preview)</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>Thermal Comfort Benchmark Standard</label>
+        <select class="custom-select" id="settingComfortStd">
+          <option value="ashrae55">ASHRAE Standard 55-2023 (Adaptive / PMV)</option>
+          <option value="iso7730">ISO 7730 Moderate Thermal Environments</option>
+        </select>
+      </div>
+      <button class="btn-primary" id="saveSettingsBtn">Save Preferences</button>
+    </div>
+  </div>
+
+  <!-- Application JavaScript Modules -->
+  <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/simulation_studio.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/materials.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/reports.js') }}"></script>
+</body>
+</html>
