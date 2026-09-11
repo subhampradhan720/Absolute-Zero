@@ -1,4 +1,7 @@
-# Absolute-Zero
+## Team
+
+**Absolute Zero** — Smart India Hackathon 2026
+
 # ThermoShelter Pro
 
 **Software-Based Model Development for Area-Specific Shelter Design for Thermal Comfort Maintenance**
@@ -30,4 +33,61 @@ Given a shelter's geometry, shape, and construction materials, plus local climat
 **Testing:** Python `unittest`
 **Data:** In-memory Python dictionaries (materials, terrains, shapes) — no external database
 
+## Work flow
+User (Browser) → Frontend (HTML/CSS/JS) → Flask API → Model Layer (Python) → JSON/CSV response → Charts/UI update
+
 ## Project Structure
+
+thermoshelter-pro/
+├── app.py # Flask server & API routes
+├── model/
+│ ├── init.py # Package exports
+│ ├── thermal_engine.py # 24-hour thermal simulation engine
+│ ├── comfort_model.py # ASHRAE 55 PMV/PPD comfort calculations
+│ ├── materials_db.py # Materials, terrains, and shape reference data
+│ └── optimizer.py # Design recommendation engine
+├── templates/
+│ └── index.html # Dashboard UI
+├── static/
+│ ├── css/style.css
+│ └── js/
+│ ├── dashboard.js
+│ ├── materials.js
+│ ├── reports.js
+│ └── simulation_studio.js
+├── test_app.py # Integration test suite
+└── requirements.txt
+
+
+## Getting Started
+
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the app
+python app.py
+
+# App runs at http://127.0.0.1:5000
+```
+
+To run tests:
+```bash
+python -m unittest test_app.py
+```
+
+## API Endpoints
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/` | GET | Dashboard UI |
+| `/api/terrains` | GET | List terrain presets |
+| `/api/materials` | GET/POST | List or add construction materials |
+| `/api/shapes` | GET | List shelter shape models |
+| `/api/simulate` | POST | Run full 24-hour thermal simulation + design recommendation |
+| `/api/optimize` | POST | Get design recommendation only |
+| `/api/export-csv` | POST | Download simulation results as CSV |
+
+## Team
+
+**Absolute Zero** — Smart India Hackathon 2026
